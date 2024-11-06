@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>File Compressor Tool</title>
+  <!-- Tailwind and DaisyUI -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" rel="stylesheet" type="text/css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@latest"></script>
+
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(135deg, #ff6464, #0062ff);
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      padding: 20px;
+      color: #ffffff;
+      transition: all 0.3s ease;
+    }
+
+    .mama {
+      box-shadow: 0px 10px 50px rgba(0, 0, 0, 0.596);
+      border-radius: 25px;
+      background: linear-gradient(135deg, #0746ac, #d64141);
+    }
+
+    .preview-container img {
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      object-fit: contain;
+      border-radius: 8px;
+      box-shadow: 0 0 20px rgb(0, 0, 0);
+      animation: zoomIn 1s ease-in-out;
+    }
+
+    /* Image Preview Zoom Animation */
+    @keyframes zoomIn {
+      0% {
+        transform: scale(0.8);
+        opacity: 0.3;
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .btn:hover {
+      transform: scale(1.05);
+      transition: transform 0.3s ease;
+    }
+
+    .output a {
+      transition: background-color 0.3s ease;
+    }
+
+    .output a:hover {
+      background-color: #4ade80;
+      /* Calming green hover effect */
+    }
+
+    /* Error Modal Style */
+    .error-modal {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: rgba(255, 0, 0, 0.8);
+      padding: 20px;
+      border-radius: 8px;
+      color: white;
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <!-- Card Layout for form -->
+    <div class="card bg-base-100 w-full max-w-sm shrink-0 mama p-4 h-auto">
+
+
+      <div class=" m-auto border-double border-4 border-blue-300">
+        <h1 class="text-4xl font-serif ">Doro-Press</h1>
+        <p>Compress your images</p>
+      </div>
+      <form class="card-body">
+        <!-- File Input for image/video -->
+        <div class="form-control mb-4">
+          <label class="label">
+            <span class="label-text text-white">Upload File</span>
+          </label>
+          <input type="file" id="file-input" accept="image/*,video/*,audio/*"
+            class="file-input file-input-bordered file-input-primary w-full max-w-xs " required />
+        </div>
+
+        <!-- Compression Slider -->
+        <div class="form-control mb-4">
+          <label for="compression-slider" class="label">
+            <span class="label-text text-white">Compression Level (1 - 100):</span>
+          </label>
+          <input type="range" id="compression-slider" min="1" max="100" value="50" class="slider range range-primary" />
+
+          <p class="text-white mt-2">Compression Level: <span id="slider-value">50</span>%</p>
+        </div>
+
+        <!-- Image Preview Section -->
+        <div class="preview-container mt-6 max-w-full w-full flex justify-center items-center">
+          <img id="image-preview" src="" alt="Preview" style="display:none;" class="rounded-lg shadow-lg" />
+        </div>
+
+        <!-- Video Preview Section -->
+        <div class="preview-container mt-6 max-w-full w-full flex justify-center items-center">
+          <video id="video-preview" controls style="display:none;" class="rounded-lg shadow-lg w-full max-w-md"></video>
+        </div>
+
+        <!-- Compress Button -->
+        <div class="form-control mt-4">
+          <button type="button" id="compress-btn" class="btn btn-primary hover:scale-105 transition-all">First Compress
+            Image</button>
+          <a id="download-link" href="#" download="compressed-file"
+            class="btn btn-primary mt-2 text-white py-2 px-4 rounded-full shadow-lg">Now Download
+            Image</a>
+        </div>
+      </form>
+    </div>
+
+
+  </div>
+
+  <!-- Error Modal -->
+  <div id="error-modal" class="error-modal">
+    <p>Please compress the file first before downloading!</p>
+    <button id="close-error" class="btn btn-danger">Close</button>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById('file-input');
+    const slider = document.getElementById('compression-slider');
+    const sliderValue = document.getElementById('slider-value');
+    const compressBtn = document.getElementById('compress-btn');
+    const downloadLink = document.getElementById('download-link');
+    const imagePreview = document.getElementById('image-preview');
+    const errorModal = document.getElementById('error-modal');
+    const closeError = document.getElementById('close-error');
+
+    let isCompressed = false; // Track if the file has been compressed
+
+    slider.oninput = function () {
+      sliderValue.textContent = slider.value;
+    };
+
+    fileInput.addEventListener('change', function () {
+      const file = fileInput.files[0];
+      if (file && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          // Show the preview of the uploaded image
+          imagePreview.src = e.target.result;
+          imagePreview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    compressBtn.onclick = function () {
+      const file = fileInput.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const fileURL = e.target.result;
+          const compressionLevel = slider.value / 100;
+
+          if (file.type.startsWith('image/')) {
+            compressImage(fileURL, compressionLevel);
+          } else if (file.type.startsWith('video/')) {
+            compressVideo(fileURL, compressionLevel);
+          }
+        };
+        reader.readAsDataURL(file);
+      } else {
+        alert("Please upload a file first.");
+      }
+    };
+
+    function compressImage(fileURL, compressionLevel) {
+      const img = new Image();
+      img.src = fileURL;
+      img.onload = function () {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const width = img.width * compressionLevel;
+        const height = img.height * compressionLevel;
+        canvas.width = width;
+        canvas.height = height;
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(function (blob) {
+          // Change the file format to PNG
+          const newFile = new File([blob], 'Doro-Press.png', { type: 'image/png' });
+          downloadLink.href = URL.createObjectURL(newFile);
+          downloadLink.style.display = 'inline-block';
+          isCompressed = true; // Set compression flag to true
+        }, 'image/png', 0.8); // Ensure the format is PNG here
+      };
+    }
+
+
+    // Handle Download Button Click
+    downloadLink.onclick = function (event) {
+      if (!isCompressed) {
+        event.preventDefault(); // Prevent download if file isn't compressed
+        errorModal.style.display = 'block'; // Show error popup
+      }
+    };
+
+    // Close the error modal
+    closeError.onclick = function () {
+      errorModal.style.display = 'none';
+    };
+  </script>
+</body>
+
+</html>
