@@ -96,7 +96,7 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background-color: rgba(255, 0, 0, 0.8);
+      background-color: rgba(0, 0, 0, 0.788);
       padding: 20px;
       border-radius: 8px;
       color: white;
@@ -163,7 +163,7 @@
   <!-- Error Modal -->
   <div id="error-modal" class="error-modal">
     <p>Please compress the file first before downloading!</p>
-    <button id="close-error" class="btn btn-danger">Close</button>
+    <button id="close-error" class="btn btn-danger  btn-error">Close</button>
   </div>
 
 
@@ -215,7 +215,7 @@
         };
         reader.readAsDataURL(file);
       } else {
-        alert("Please upload a file first.");
+        alert("Please upload a file first before compressing");
       }
     };
 
