@@ -27,6 +27,24 @@
       padding: 20px;
       color: #ffffff;
       transition: all 0.3s ease;
+      animation: ltoR 1.5s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+
+    }
+
+    @keyframes ltoR {
+      0% {
+        margin-left: -600px;
+        opacity: 0;
+      }
+
+      50% {
+        opacity: 0.5;
+      }
+
+      100% {
+        margin-left: 0;
+        opacity: 1;
+      }
     }
 
     .mama {
@@ -89,7 +107,7 @@
 
 <body>
 
-  <div class="container">
+  <div class="container m-auto">
     <!-- Card Layout for form -->
     <div class="card bg-base-100 w-full max-w-sm shrink-0 mama p-4 h-auto">
 
@@ -148,6 +166,9 @@
     <button id="close-error" class="btn btn-danger">Close</button>
   </div>
 
+
+
+
   <script>
     const fileInput = document.getElementById('file-input');
     const slider = document.getElementById('compression-slider');
@@ -157,6 +178,7 @@
     const imagePreview = document.getElementById('image-preview');
     const errorModal = document.getElementById('error-modal');
     const closeError = document.getElementById('close-error');
+
 
     let isCompressed = false; // Track if the file has been compressed
 
